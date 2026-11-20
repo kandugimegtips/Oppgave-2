@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+<html lang="no">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elevdatabase</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+
+        input, select {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 9px;
+            margin: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Elevdatabase</h2>
+
+        <label>Navn:</label><br>
+        <input id="name" type="text"><br>
+
+        <label>Elevnummer:</label><br>
+        <input id="number" type="text"><br>
+
+        <label>Klasse:</label><br>
+        <input id="class" type="text"><br>
+
+        <label>Kjønn:</label><br>
+        <select id="gender">
+            <option value="Gutt">Gutt</option>
+            <option value="Jente">Jente</option>
+        </select>
+
+        <hr>
+
+        <h3>Cloud Firestore</h3>
+
+        <button id="save">Lagre</button>
+        <button id="find">Hent</button>
+        <button id="edit">Oppdater</button>
+        <button id="delete">Slett</button>
+    </div>
+
+    <script type="module">
+
+        import { initializeApp } from
+        "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+
+        import {
+            getFirestore,
+            doc,
+            setDoc,
+            getDoc,
+            updateDoc,
+            deleteDoc
+        } from
+        "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyB49OhV4K8_F2Vzn0nlFHAD2HUBPad41nQ",
+            authDomain: "fir-oppgave2.firebaseapp.com",
+            projectId: "fir-oppgave2",
+            storageBucket: "fir-oppgave2.firebasestorage.app",
+            messagingSenderId: "103951110356",
+            appId: "1:103951110356:web:a9a1cc5bde178e09776b41"
+        };
+
+        
+        const app = initializeApp(firebaseConfig);
+        const database = getFirestore(app);
+
+       
+        const nameInput = document.getElementById("name");
+        const numberInput = document.getElementById("number");
+        const classInput = document.getElementById("class");
+        const genderInput = document.getElementById("gender");
+
+        
+        function checkFields() {
+            if (!nameInput.value.trim() ||
+                !numberInput.value.trim() ||
+                !classInput.value.trim()) {
+                alert("Fyll ut alle feltene!");
+                return false;
+            }
+            return true;
+        }
+
+        // Save student
+        async function saveStudent() {
+            if (!checkFields()) return;
+
+            try {
+                await setDoc(doc(database, "Elever", numberInput.value.trim()), {
+                    navn: nameInput.value.trim(),
+                    elevnummer: numberInput.value.trim(),
+                    klasse: classInput.value.trim(),
+                    kjonn: genderInput.value
+                });
+
+                alert("Eleven er lagret!");
+
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Find student
+        async function findStudent() {
+            if (!numberInput.value.trim()) {
+                alert("Skriv inn elevnummer!");
+                return;
+            }
+
+            try {
+                const studentRef = doc(database, "Elever", numberInput.value.trim());
+                const result = await getDoc(studentRef);
+
+                if (result.exists()) {
+                    const data = result.data();
+
+                    nameInput.value = data.navn;
+                    numberInput.value = data.elevnummer;
+                    classInput.value = data.klasse;
+                    genderInput.value = data.kjonn;
+
+                    alert("Eleven ble funnet!");
+                } else {
+                    alert("Fant ingen elev.");
+                }
+
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Update student
+        async function editStudent() {
+            if (!checkFields()) return;
+
+            try {
+                const studentRef = doc(database, "Elever", numberInput.value.trim());
+
+                await updateDoc(studentRef, {
+                    navn: nameInput.value.trim(),
+                    klasse: classInput.value.trim(),
+                    kjonn: genderInput.value
+                });
+
+                alert("Informasjonen er oppdatert!");
+
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Delete student
+        async function deleteStudent() {
+            if (!numberInput.value.trim()) {
+                alert("Skriv inn elevnummer!");
+                return;
+            }
+
+            if (!confirm("Vil du slette eleven?")) return;
+
+            try {
+                const studentRef = doc(database, "Elever", numberInput.value.trim());
+
+                await deleteDoc(studentRef);
+
+                alert("Eleven er slettet!");
+
+                nameInput.value = "";
+                numberInput.value = "";
+                classInput.value = "";
+                genderInput.value = "Gutt";
+
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Button events
+        document.getElementById("save").addEventListener("click", saveStudent);
+        document.getElementById("find").addEventListener("click", findStudent);
+        document.getElementById("edit").addEventListener("click", editStudent);
+        document.getElementById("delete").addEventListener("click", deleteStudent);
+
+    </script>
+
+</body>
+</html>
